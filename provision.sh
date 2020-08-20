@@ -3,38 +3,37 @@
 VAGRANT_HOST_DIR=/mnt/host_machine
 
 ########################
+# Setup
+########################
+sudo service unattended-upgrades stop
+
+########################
 # Jenkins & Java
 ########################
-echo "Installing Jenkins and Java"
-wget -q -O - http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key | sudo apt-key add -
-sudo sh -c 'echo deb http://pkg.jenkins-ci.org/debian binary/ > /etc/apt/sources.list.d/jenkins.list'
+wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | apt-key add -
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys FCEF32E745F2C3D5 > /dev/null 2>&1
 sudo apt-get update > /dev/null 2>&1
-sudo apt-get -y install default-jdk jenkins > /dev/null 2>&1
 echo "Installing Jenkins default user and config"
 sudo cp $VAGRANT_HOST_DIR/JenkinsConfig/config.xml /var/lib/jenkins/
 sudo mkdir -p /var/lib/jenkins/users/admin
 sudo cp $VAGRANT_HOST_DIR/JenkinsConfig/users/admin/config.xml /var/lib/jenkins/users/admin/
 sudo chown -R jenkins:jenkins /var/lib/jenkins/users/
 
-########################
-# Node & npm
-########################
-echo "Installing Node & npm"
-curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
-sudo apt-get -y install nodejs
-sudo apt-get -y install npm
+# Java defaults to open ports on IPv6 and we cannot access it
+# so we set it to IPv4
+sudo sed -i 's/JAVA_ARGS="-Djava.awt.headless=true/& -Djava.net.preferIPv4Stack=true/' /etc/default/jenkins
+
+# Start the Jenkins server
+# sudo systemctl start jenkins
+
+# Enable the service to load during boot
+sudo systemctl enable jenkins
+sudo systemctl status jenkins
 
 ########################
 # Docker
 ########################
-echo "Installing Docker"
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-sudo apt-get update
-sudo apt-get -y install docker-ce
-sudo systemctl enable docker
-sudo usermod -aG docker ${USER}
+sudo usermod -aG docker "${USER}"
 sudo usermod -aG docker jenkins
 sudo usermod -aG docker ubuntu
 
@@ -53,6 +52,12 @@ cd /etc/nginx/sites-available
 sudo rm default ../sites-enabled/default
 sudo cp /mnt/host_machine/VirtualHost/jenkins /etc/nginx/sites-available/
 sudo ln -s /etc/nginx/sites-available/jenkins /etc/nginx/sites-enabled/
+
+########################
+# Teardown
+########################
+sudo service docker restart
 sudo service nginx restart
 sudo service jenkins restart
+sudo service unattended-upgrades restart
 echo "Success"
