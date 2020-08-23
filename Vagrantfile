@@ -7,7 +7,7 @@ Vagrant.configure("2") do |config|
       # A vagrant Box with almost all we need
       devopsbox.vm.box = "darkwizard242/devopsubuntu1804"
       devopsbox.vm.hostname = "devops"
-      devopsbox.vm.network "forwarded_port", guest: 80, host: 8080
+      devopsbox.vm.network "forwarded_port", guest: 8080, host: 8080
       devopsbox.vm.synced_folder ".", "/mnt/host_machine"
       devopsbox.vm.provider :virtualbox do |vb|
           vb.name = "devops"

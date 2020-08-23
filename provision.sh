@@ -6,6 +6,7 @@ VAGRANT_HOST_DIR=/mnt/host_machine
 # Setup
 ########################
 sudo service unattended-upgrades stop
+sudo apt-get update && sudo apt-get dist-upgrade -y
 
 ########################
 # Jenkins & Java
